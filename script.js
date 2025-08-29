@@ -6,7 +6,7 @@ async function generar() {
   img.alt = "Generando...";
 
   // ⚠️ Poné aquí la URL de tu backend en Render
-  const backendUrl = "https://tu-backend.onrender.com/generar";
+  const backendUrl = "https://backend-img-generator.onrender.com/generar";
 
   const response = await fetch(backendUrl, {
     method: "POST",
