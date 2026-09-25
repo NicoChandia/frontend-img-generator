@@ -33,6 +33,11 @@
         Describí lo que querés ver y la IA lo dibuja en unos segundos.
         Funciona mejor si escribís en inglés.
       </p>
+      <p class="hint model-note">
+        Usa <a href="https://huggingface.co/black-forest-labs/FLUX.1-schnell">FLUX.1-schnell</a>,
+        un modelo de código abierto de Black Forest Labs pensado para generar imágenes rápido
+        («schnell» significa «rápido» en alemán).
+      </p>
     </section>
 
     <form id="form" class="card composer" novalidate>
@@ -113,6 +118,7 @@
       <ol class="flow">
         <li><strong>Frontend estático</strong> (HTML, CSS y JS, sin frameworks) publicado en GitHub Pages.</li>
         <li><strong>API en Flask</strong> desplegada en Render: recibe el prompt, guarda el token de Hugging Face del lado del servidor y solo acepta pedidos de este dominio (CORS).</li>
+        <li><strong>Modelo FLUX.1-schnell</strong> (Black Forest Labs, licencia Apache 2.0): genera una imagen en solo 1 a 4 pasos, por eso responde en segundos.</li>
         <li><strong>Hugging Face Inference Providers</strong> con selección automática de proveedor: si un proveedor deja de servir el modelo, la API sigue funcionando sin cambiar el frontend.</li>
       </ol>
       <p class="hint">

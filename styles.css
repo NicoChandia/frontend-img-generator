@@ -192,6 +192,10 @@ h1 {
   color: rgb(var(--muted));
 }
 
+.model-note {
+  max-width: 60ch;
+}
+
 .card {
   border: 1px solid rgb(var(--line));
   border-radius: var(--radius);
