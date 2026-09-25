@@ -1,24 +1,131 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Generador de Imágenes con IA</title>
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generador de imágenes · Nicolás Chandia</title>
+  <meta name="description" content="Generá imágenes a partir de texto. Frontend estático en GitHub Pages + API en Flask que actúa de proxy hacia Hugging Face." />
+  <meta name="color-scheme" content="light dark" />
+  <link rel="icon" type="image/png" href="favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <h1>🎨 Generador de Imágenes con IA 🎨</h1>
+  <a class="skip" href="#prompt">Saltar al generador</a>
 
-  <input id="prompt" type="text" placeholder="Escribe tu idea (en inglés para mejores resultados)" />
-  <br>
-  <br>
-  <button onclick="generar()">Generar Imagen</button>
+  <header class="topbar">
+    <a class="brand" href="https://porfolio-nico.vercel.app/#proyectos">
+      <span aria-hidden="true">←</span> nico<span class="accent">.</span>dev
+    </a>
+    <p class="status" id="server-status" role="status">
+      <span class="dot" aria-hidden="true"></span>
+      <span id="server-status-text">Conectando con el servidor…</span>
+    </p>
+  </header>
 
-  <!-- Loader -->
-  <div id="loader" class="loader hidden"></div>
-  <br>
-  <br>
-  <img id="resultado" src="" alt="Aquí aparecerá tu imagen generada" />
+  <main class="wrap">
+    <section class="intro">
+      <p class="eyebrow">Texto → imagen · FLUX.1-schnell</p>
+      <h1>Generador de imágenes</h1>
+      <p class="lead">
+        Describí lo que querés ver y la IA lo dibuja en unos segundos.
+        Funciona mejor si escribís en inglés.
+      </p>
+    </section>
+
+    <form id="form" class="card composer" novalidate>
+      <label for="prompt" class="label">Tu idea</label>
+      <textarea
+        id="prompt"
+        name="prompt"
+        rows="3"
+        maxlength="500"
+        required
+        placeholder="Ej: a red apple on a wooden table, soft morning light, photo"
+        aria-describedby="prompt-help"
+      ></textarea>
+      <div class="composer-foot">
+        <p id="prompt-help" class="hint">
+          <kbd>Enter</kbd> para generar · <kbd>Shift</kbd> + <kbd>Enter</kbd> para salto de línea
+          · <span id="count">0</span>/500
+        </p>
+        <button id="submit" class="btn btn-primary" type="submit">
+          <span class="btn-label">Generar</span>
+        </button>
+      </div>
+
+      <div class="examples">
+        <p class="label">¿Sin ideas? Probá con:</p>
+        <ul id="examples" class="chips"></ul>
+      </div>
+    </form>
+
+    <section class="card stage" aria-labelledby="result-title">
+      <h2 id="result-title" class="sr-only">Resultado</h2>
+
+      <!-- Estado vacío -->
+      <div id="state-empty" class="state">
+        <div class="placeholder" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8.5" cy="8.5" r="1.8"/><path d="m21 15-5-5L5 21"/></svg>
+        </div>
+        <p>Tu imagen va a aparecer acá.</p>
+      </div>
+
+      <!-- Generando -->
+      <div id="state-loading" class="state" hidden>
+        <div class="skeleton" aria-hidden="true"></div>
+        <p class="loading-text">
+          Generando… <span class="mono" id="timer">0,0 s</span>
+        </p>
+        <p class="hint" id="loading-hint">Suele tardar menos de 15 segundos.</p>
+      </div>
+
+      <!-- Error -->
+      <div id="state-error" class="state" hidden>
+        <p class="error-title">No se pudo generar la imagen</p>
+        <p class="hint" id="error-text"></p>
+        <button id="retry" class="btn" type="button">Reintentar</button>
+      </div>
+
+      <!-- Resultado -->
+      <figure id="state-result" class="result" hidden>
+        <img id="result-img" alt="" width="1024" height="1024" />
+        <figcaption>
+          <p id="result-prompt" class="result-prompt"></p>
+          <p class="hint mono" id="result-meta"></p>
+          <div class="actions">
+            <a id="download" class="btn" download="imagen-generada.png" href="#">Descargar</a>
+            <button id="copy" class="btn" type="button">Copiar prompt</button>
+          </div>
+        </figcaption>
+      </figure>
+    </section>
+
+    <section id="history-section" class="history" aria-labelledby="history-title" hidden>
+      <h2 id="history-title" class="label">Esta sesión</h2>
+      <ul id="history" class="history-grid"></ul>
+    </section>
+
+    <details class="card how">
+      <summary>¿Cómo funciona?</summary>
+      <ol class="flow">
+        <li><strong>Frontend estático</strong> (HTML, CSS y JS, sin frameworks) publicado en GitHub Pages.</li>
+        <li><strong>API en Flask</strong> desplegada en Render: recibe el prompt, guarda el token de Hugging Face del lado del servidor y solo acepta pedidos de este dominio (CORS).</li>
+        <li><strong>Hugging Face Inference Providers</strong> con selección automática de proveedor: si un proveedor deja de servir el modelo, la API sigue funcionando sin cambiar el frontend.</li>
+      </ol>
+      <p class="hint">
+        Código:
+        <a href="https://github.com/NicoChandia/frontend-img-generator">frontend</a> ·
+        <a href="https://github.com/NicoChandia/backend-img-generator">backend</a>
+      </p>
+    </details>
+  </main>
+
+  <footer class="foot">
+    Hecho por <a href="https://porfolio-nico.vercel.app">Nicolás Chandia</a>
+  </footer>
 
   <script src="script.js"></script>
 </body>
